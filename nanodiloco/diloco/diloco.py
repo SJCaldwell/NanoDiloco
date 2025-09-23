@@ -1,14 +1,23 @@
 import torch
 import torch.distributed as dist
 import time
-
+from transformers import get_cosine_schedule_with_warmup
 
 
 class Diloco:
-    def __init__(self, model, inner_optimizer, outer_optimizer, inner_steps: int = 100, outer_steps: int = 10):
+    def __init__(self, 
+        model, 
+        inner_optimizer, 
+        outer_optimizer, 
+        warmup_steps, 
+        total_steps,
+        inner_steps: int = 100, 
+        outer_steps: int = 10
+    ):
         self.model = model
         self.inner_optimizer = inner_optimizer
         self.outer_optimizer = outer_optimizer
+        self.scheduler = get_cosine_schedule_with_warmup(self.inner_optimizer, num_warmup_steps=warmup_steps, num_training_steps=total_steps)
         for param in self.model.parameters():
             rank_0_param = param.data.clone()
             dist.broadcast(rank_0_param, src=0)
@@ -45,6 +54,12 @@ class Diloco:
         self.outer_optimizer.zero_grad()
         self.offloaded_last_sync_parameters = self._get_offloaded_parameters()
 
+    def inner_step(self):
+        torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0) # gradient clipping
+        self.inner_optimizer.step()
+        self.scheduler.step()
+        self.inner_optimizer.zero_grad()
+
     @property
     def avg_sync_time(self):
         return self._sync_time / self._sync_calls if self._sync_calls > 0 else 0
@@ -52,11 +67,6 @@ class Diloco:
     def __call__(self, *args, **kwargs):
         return self.model(*args, **kwargs)
     
-    def disable_grad_sync(self):
-        self.sync_grads = False
-
-    def enable_grad_sync(self):
-        self.sync_grads = True
 
     def train(self):
         self.model.train()
