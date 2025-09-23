@@ -20,7 +20,7 @@ VOLUME_NAME = "hf-c4-tiny"
 # Cluster configuration
 n_nodes = 2
 n_proc_per_node = 1  # 1 GPUs per node for multi-node (2 total)
-single_node_gpus = 4  # 2 GPUs for single node training
+single_node_gpus = 2  # 2 GPUs for single node training
 
 # Base image with dependencies
 base_image = (

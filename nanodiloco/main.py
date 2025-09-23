@@ -1,5 +1,5 @@
-from diloco import Diloco
-from training_utils import ddp_setup, create_run_name, get_tokenized_dataset, get_tokenizer, set_seed_all
+from .diloco import Diloco
+from .training_utils import ddp_setup, create_run_name, get_tokenized_dataset, get_tokenizer, set_seed_all
 from cyclopts import App
 import os
 import torch.distributed as dist
