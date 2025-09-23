@@ -1,5 +1,5 @@
 from diloco import Diloco
-from training_utils import ddp_setup, create_run_name, get_tokenized_dataset, get_tokenizer, get_tokenized_dataset, set_seed_all
+from training_utils import ddp_setup, create_run_name, get_tokenized_dataset, get_tokenizer, set_seed_all
 from cyclopts import App
 import os
 import torch.distributed as dist
@@ -8,7 +8,7 @@ import torch
 from typing import Optional
 from transformers import LlamaConfig, LlamaForCausalLM
 from torch.utils.data import DataLoader
-from datasets.distributed import split_dataset_by_node
+from datasets.distributed import split_dataset_by_node # type: ignore
 import json
 
 app = App("nanodiloco")
