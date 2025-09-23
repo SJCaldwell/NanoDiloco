@@ -1,0 +1,6 @@
+{
+    "nodes": 2,
+    "location": "modal",
+    "backend": "nccl",
+    "measure_comms": true
+  }
