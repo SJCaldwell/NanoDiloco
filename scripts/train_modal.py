@@ -48,7 +48,7 @@ volume_model_output = modal.Volume.from_name(
 def _train_single_node(
     batch_size: int = 256,
     lr: float = 4e-4,
-    steps: int = 10000,
+    steps: int = 10_000,
     llama_config_path: str = None,
     wandb_config_path: str = None,
 ):
@@ -61,7 +61,7 @@ def _train_single_node(
         "-m", "nanodiloco.main",
         f"--batch-size={batch_size}",
         f"--lr={lr}",
-        f"--steps={steps}",
+        f"--total-steps={steps}",
         "--dataset-path=/vol/datasets/PrimeIntellect/c4-tiny/en/save_to_disk",
     ]
 
