@@ -19,8 +19,7 @@ class Diloco:
         self.outer_optimizer = outer_optimizer
         self.scheduler = get_cosine_schedule_with_warmup(self.inner_optimizer, num_warmup_steps=warmup_steps, num_training_steps=total_steps)
         for param in self.model.parameters():
-            rank_0_param = param.data.clone()
-            dist.broadcast(rank_0_param, src=0)
+            dist.broadcast(param.data, src=0)
         self._sync_time = 0
         self._sync_calls = 0
         self.offloaded_last_sync_parameters = self._get_offloaded_parameters()
@@ -46,8 +45,8 @@ class Diloco:
 
         for replica_param, last_sync_param in zip(replica_params, self.offloaded_last_sync_parameters):
             last_sync_param_on_device = last_sync_param.to(replica_param.device)
-            last_sync_param.grad = last_sync_param_on_device - replica_param.data
-            dist.all_reduce(tensor=last_sync_param.grad, op=dist.ReduceOp.AVG)
+            replica_param.grad = last_sync_param_on_device - replica_param.data
+            dist.all_reduce(tensor=replica_param.grad, op=dist.ReduceOp.AVG)
             replica_param.data = last_sync_param_on_device
         
         self.outer_optimizer.step()
