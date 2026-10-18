@@ -8,6 +8,16 @@ import torch.distributed as dist
 import os
 from transformers import AutoTokenizer
 
+def forward_backward(model, batch, gradient_accumulation_steps: int) -> torch.Tensor:
+    """
+    Runs forward + backward on one micro-batch, scaling the loss so that gradients
+    accumulated over `gradient_accumulation_steps` micro-batches equal the gradient of the full batch.
+    Returns the unscaled micro-batch loss (detached) for logging.
+    """
+    output = model(**batch)
+    (output.loss / gradient_accumulation_steps).backward()
+    return output.loss.detach()
+
 def set_seed_all(seed: int = 42) -> None:
     random.seed(seed)
     np.random.seed(seed)

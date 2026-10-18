@@ -1,5 +1,5 @@
 from .diloco import Diloco
-from .training_utils import ddp_setup, create_run_name, get_tokenized_dataset, get_tokenizer, set_seed_all
+from .training_utils import ddp_setup, create_run_name, get_tokenized_dataset, get_tokenizer, set_seed_all, forward_backward
 from cyclopts import App
 import os
 import torch.distributed as dist
@@ -63,7 +63,7 @@ def train_model(
     global_rank = int(os.environ["RANK"])
 
     assert batch_size % per_device_batch_size == 0 # check even gradient accumulation
-    gradient_accumulation_steps = batch_size / per_device_batch_size
+    gradient_accumulation_steps = batch_size // per_device_batch_size
 
     outer_steps = total_steps // inner_steps
     assert total_steps % inner_steps == 0 # check even outer steps
@@ -106,9 +106,7 @@ def train_model(
     for (i, batch) in enumerate(train_dataloader):
         real_step = (i + 1) // gradient_accumulation_steps
         batch = {k: v.to(device) for k, v in batch.items()}
-        output = diloco_model(**batch)
-        loss = output.loss / gradient_accumulation_steps
-        output.loss.backward()
+        loss = forward_backward(diloco_model, batch, gradient_accumulation_steps)
         if (i + 1) % gradient_accumulation_steps == 0:
             diloco_model.inner_step()
 
